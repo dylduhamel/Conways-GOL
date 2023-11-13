@@ -19,10 +19,10 @@ class G {
     vector<SDL_Color> colors;
     SDL_Event event;
     public:
-    G() 
+    G(int width, int height) 
     {
        SDL_Init(SDL_INIT_VIDEO); 
-       SDL_CreateWindowAndRenderer(640*4, 480*4, SDL_WINDOW_ALLOW_HIGHDPI, &window, &renderer);
+       SDL_CreateWindowAndRenderer(width, height, SDL_WINDOW_ALLOW_HIGHDPI, &window, &renderer);
        SDL_RenderSetScale(renderer,4,4);
     }
 
@@ -31,14 +31,15 @@ class G {
         points.emplace_back(xm,ym);
         colors.emplace_back(r,g,b,a);
     }
+    
     void clearpixels()
     {
         points.clear();
     }
 
-    void update() 
+    void update(uint8_t r = 255, uint8_t g = 255, uint8_t b = 255, uint8_t a = 255)
     {
-        SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
+        SDL_SetRenderDrawColor(renderer, r, g, b, a);
         SDL_RenderClear(renderer);
         
         for(long unsigned int i = 0; i < points.size(); i++)
