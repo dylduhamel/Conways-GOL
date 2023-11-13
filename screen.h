@@ -15,42 +15,50 @@ class G {
     SDL_Window* window;
     SDL_Renderer* renderer;
     SDL_bool done;
-    vector<SDL_FPoint> points;
-    vector<SDL_Color> colors;
     SDL_Event event;
+
+    // Pixel scaling
+    int matrix_width;
+    int matrix_height;
+    float cell_width;
+    float cell_height;
+
     public:
-    G(int width, int height) 
+    G(int width, int height, int m_width, int m_height) 
     {
        SDL_Init(SDL_INIT_VIDEO); 
        SDL_CreateWindowAndRenderer(width, height, SDL_WINDOW_ALLOW_HIGHDPI, &window, &renderer);
-       SDL_RenderSetScale(renderer,4,4);
+       SDL_RenderSetScale(renderer,1,1);
+
+       matrix_width = m_width;
+       matrix_height = m_height;
+       cell_width = static_cast<float>(width) / matrix_width;
+       cell_height = static_cast<float>(height) / matrix_height;
     }
 
-    void drawpixel(double xm, double ym, uint8_t r = 255, uint8_t g = 255, uint8_t b = 255, uint8_t a = 255) 
+    void drawpixel(int xm, int ym, uint8_t r = 255, uint8_t g = 255, uint8_t b = 255, uint8_t a = 255)
     {
-        points.emplace_back(xm,ym);
-        colors.emplace_back(r,g,b,a);
-    }
-    
-    void clearpixels()
-    {
-        points.clear();
-    }
+        SDL_Rect rect;
+        rect.x = static_cast<int>(xm * cell_width);
+        rect.y = static_cast<int>(ym * cell_height);
+        rect.w = static_cast<int>(cell_width);
+        rect.h = static_cast<int>(cell_height);
 
-    void update(uint8_t r = 255, uint8_t g = 255, uint8_t b = 255, uint8_t a = 255)
-    {
         SDL_SetRenderDrawColor(renderer, r, g, b, a);
-        SDL_RenderClear(renderer);
-        
-        for(long unsigned int i = 0; i < points.size(); i++)
-        {
-            SDL_SetRenderDrawColor(renderer, colors[i].r, colors[i].g, colors[i].b, colors[i].a);
-            SDL_RenderDrawPointF(renderer, points[i].x,points[i].y);
-        }
-
-
-        SDL_RenderPresent(renderer);
+        SDL_RenderFillRect(renderer, &rect);
     }
+
+    void clearpixels(uint8_t r = 0, uint8_t g = 0, uint8_t b = 0, uint8_t a = 255)
+    {
+        SDL_SetRenderDrawColor(renderer, r, g, b, a); // Set the color to clear with.
+        SDL_RenderClear(renderer);                    // Clear the renderer with the draw color.
+    }
+
+    void update()
+    {
+        SDL_RenderPresent(renderer); // Present the renderer, which updates the screen with rendered content.
+    }
+
     void input() {
         while( SDL_PollEvent( &event ) )
         {  

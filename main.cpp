@@ -1,8 +1,19 @@
+/**
+ * @author Dylan Duhamel { duhadm19@alumni.wfu.edu } 
+ * @date Nov. 13, 2023
+ *
+ * Conway's game of life simulation
+ **/
+
 #include "screen.h"
 #include <unistd.h>
+#include <cmath>
 
-const int GAME_WIDTH = 50;
-const int GAME_HEIGHT = 50;
+const int GAME_WIDTH = 100;
+const int GAME_HEIGHT = 100;
+const int WINDOW_WIDTH = 800;
+const int WINDOW_HEIGHT = 800;
+const double PI = 3.14159265358979323846;
 
 bool isAlive(int x, int y, std::array<std::array<int, GAME_HEIGHT>, GAME_WIDTH> &game)
 {
@@ -52,7 +63,7 @@ bool isAlive(int x, int y, std::array<std::array<int, GAME_HEIGHT>, GAME_WIDTH> 
 int main()
 {
 	// SDL2 graphics object
-	G screen(640, 640);
+	G screen(WINDOW_WIDTH, WINDOW_HEIGHT, GAME_WIDTH, GAME_HEIGHT);
 
 	// Both matrix for the swapping on Conways enviornment
 	std::array<std::array<int, GAME_HEIGHT>, GAME_WIDTH> display{};
@@ -64,21 +75,28 @@ int main()
 	uint8_t b = static_cast<uint8_t>(0);
 	uint8_t a = static_cast<uint8_t>(255);
 
+	// Speed of color change
+	const double colorChangeSpeed = 0.001;
+
 	// Instantiate the display matrix with random points
 	for (auto &row : display)
 	{
 		// Populate either 1 or 0 for each element
 		std::generate(row.begin(), row.end(), []()
-					  { return rand() % 10 == 0 ? 1 : 0; });
+					  { return rand() % 5 == 0 ? 1 : 0; });
 	}
 
 	while (true)
 	{
-		// Update pixel colors
-		r = static_cast<uint8_t>((r + 15) % 256);
-		g = static_cast<uint8_t>((g + 15) % 256);
-		b = static_cast<uint8_t>((b + 20) % 256);
+		// Clear rendered pixels
+		screen.clearpixels();
 
+		// Calculate a smooth transition for each color component
+		unsigned int ticks = SDL_GetTicks();												// Milliseconds since SDL initialization
+		r = static_cast<uint8_t>((sin(ticks * colorChangeSpeed) + 1) * 127.5);				// Oscillates between 0 and 255
+		g = static_cast<uint8_t>((sin(ticks * colorChangeSpeed + 2 * PI / 3) + 1) * 127.5); // 120 degrees out of phase with red
+		b = static_cast<uint8_t>((sin(ticks * colorChangeSpeed + 4 * PI / 3) + 1) * 127.5); // 240 degrees out of phase with red
+		
 		// Check each pixel based on rules
 		for (int i = 0; i < GAME_WIDTH; i++)
 		{
@@ -97,7 +115,7 @@ int main()
 				// Check pixel for rules
 				if (swap[i][j])
 				{
-					screen.drawpixel(i, j, 255, 0, 0, 255);
+					screen.drawpixel(i, j, r, g, b, a);
 				}
 			}
 		}
@@ -107,9 +125,12 @@ int main()
 
 		// Display to screen
 		screen.update();
-		SDL_Delay(20);
+
+		// Delay to control frame rate
+		SDL_Delay(100);
+
+		// Handle input
 		screen.input();
-		screen.clearpixels();
 	}
 
 	return 0;
