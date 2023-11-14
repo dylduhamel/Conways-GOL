@@ -31,5 +31,5 @@ Be sure to include the following flags when compiling:
 g++ main.cpp -std=c++20 -lSDL2 -o main
 ```
 
-<img src="https://github.com/dylduhamel/Conways-GOL/assets/70403658/f9f511ec-50e5-484e-af52-66c98ad4ced3" width="300" height="300">
+<img src="https://github.com/dylduhamel/Conways-GOL/assets/70403658/f9f511ec-50e5-484e-af52-66c98ad4ced3" width="500" height="500">
 
