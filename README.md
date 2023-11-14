@@ -19,6 +19,12 @@ sudo apt-get update
 sudo apt-get install libsdl2-dev
 ```
 
+For those using MacOS, SDL2 can be installed using Homebrew:
+
+```
+brew install sdl2
+```
+
 Be sure to include the following flags when compiling:
 
 ```
