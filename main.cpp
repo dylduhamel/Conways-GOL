@@ -8,13 +8,41 @@
 #include "screen.h"
 #include <unistd.h>
 #include <cmath>
+#include <map>
+#include <tuple>
 
-const int GAME_WIDTH = 100;
-const int GAME_HEIGHT = 100;
-const int WINDOW_WIDTH = 800;
-const int WINDOW_HEIGHT = 800;
+const int GAME_WIDTH = 300;
+const int GAME_HEIGHT = 300;
+const int WINDOW_WIDTH = 1200;
+const int WINDOW_HEIGHT = 1200;
 const double PI = 3.14159265358979323846;
 
+// Determine trace based on previous value
+int trace(int x, int y, std::array<std::array<int, GAME_HEIGHT>, GAME_WIDTH> &game, std::array<std::array<int, GAME_HEIGHT>, GAME_WIDTH> &prevGame)
+{
+	int previousCell = prevGame[x][y];
+	int newCell = game[x][y];
+
+	// Cell stayed alive
+	if (previousCell == 1 && newCell == 1)
+		return 1;
+
+	// Cell was just born
+	if (previousCell == 0 && newCell == 1)
+		return 2;
+	
+	// Cell just died
+	if (previousCell == 1 && newCell == 0)
+		return 3;
+
+	// Cell stayed dead
+	if (previousCell == 0 && newCell == 0)
+		return 4;
+	
+	return 0;
+}
+
+// Determine neighbors and status
 bool isAlive(int x, int y, std::array<std::array<int, GAME_HEIGHT>, GAME_WIDTH> &game)
 {
 	int aliveNeighbors = 0;
@@ -68,12 +96,22 @@ int main()
 	// Both matrix for the swapping on Conways enviornment
 	std::array<std::array<int, GAME_HEIGHT>, GAME_WIDTH> display{};
 	std::array<std::array<int, GAME_HEIGHT>, GAME_WIDTH> swap{};
+	std::array<std::array<int, GAME_HEIGHT>, GAME_WIDTH> colors{};
 
 	// Pixel colors
 	uint8_t r = static_cast<uint8_t>(255);
-	uint8_t g = static_cast<uint8_t>(0);
-	uint8_t b = static_cast<uint8_t>(0);
+	uint8_t g = static_cast<uint8_t>(255);
+	uint8_t b = static_cast<uint8_t>(255);
 	uint8_t a = static_cast<uint8_t>(255);
+
+	// Define a map from int to tuple of three ints (for RGB values)
+	std::map<int, std::tuple<int, int, int>> colorMap;
+
+	// Add key-value pairs to the map
+	colorMap[1] = std::make_tuple(15, 92, 15); // Cell stayed alive
+	colorMap[2] = std::make_tuple(0, 255, 0); // Cell was just born 
+	colorMap[3] = std::make_tuple(255, 0, 0); // Cell just died
+	colorMap[4] = std::make_tuple(20, 20, 20);	  // Cell stayed dead
 
 	// Speed of color change
 	const double colorChangeSpeed = 0.001;
@@ -83,19 +121,19 @@ int main()
 	{
 		// Populate either 1 or 0 for each element
 		std::generate(row.begin(), row.end(), []()
-					  { return rand() % 5 == 0 ? 1 : 0; });
+					  { return rand() % 2 == 0 ? 1 : 0; });
 	}
 
 	while (true)
 	{
 		// Clear rendered pixels
-		screen.clearpixels();
+		screen.clearpixels(0,0,0);
 
-		// Calculate a smooth transition for each color component
-		unsigned int ticks = SDL_GetTicks();												// Milliseconds since SDL initialization
-		r = static_cast<uint8_t>((sin(ticks * colorChangeSpeed) + 1) * 127.5);				// Oscillates between 0 and 255
-		g = static_cast<uint8_t>((sin(ticks * colorChangeSpeed + 2 * PI / 3) + 1) * 127.5); // 120 degrees out of phase with red
-		b = static_cast<uint8_t>((sin(ticks * colorChangeSpeed + 4 * PI / 3) + 1) * 127.5); // 240 degrees out of phase with red
+		// // Calculate a smooth transition for each color component
+		// unsigned int ticks = SDL_GetTicks();												// Milliseconds since SDL initialization
+		// r = static_cast<uint8_t>((sin(ticks * colorChangeSpeed) + 1) * 127.5);				// Oscillates between 0 and 255
+		// g = static_cast<uint8_t>((sin(ticks * colorChangeSpeed + 2 * PI / 3) + 1) * 127.5); // 120 degrees out of phase with red
+		// b = static_cast<uint8_t>((sin(ticks * colorChangeSpeed + 4 * PI / 3) + 1) * 127.5); // 240 degrees out of phase with red
 		
 		// Check each pixel based on rules
 		for (int i = 0; i < GAME_WIDTH; i++)
@@ -104,6 +142,8 @@ int main()
 			{
 				// Check pixel for rules
 				swap[i][j] = isAlive(i, j, display) ? 1 : 0;
+
+				colors[i][j] = trace(i, j, swap, display);
 			}
 		}
 
@@ -112,10 +152,11 @@ int main()
 		{
 			for (int j = 0; j < GAME_HEIGHT; j++)
 			{
-				// Check pixel for rules
-				if (swap[i][j])
+				if (colors[i][j] != 0)
 				{
-					screen.drawpixel(i, j, r, g, b, a);
+					auto [nr, ng, nb] = colorMap[colors[i][j]];
+
+					screen.drawpixel(i, j, nr, ng, nb, a);
 				}
 			}
 		}
@@ -127,7 +168,7 @@ int main()
 		screen.update();
 
 		// Delay to control frame rate
-		SDL_Delay(100);
+		SDL_Delay(150);
 
 		// Handle input
 		screen.input();
