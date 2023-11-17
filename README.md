@@ -25,7 +25,7 @@ For those using MacOS, SDL2 can be installed using Homebrew:
 brew install sdl2
 ```
 
-Be sure to include the following flags when compiling:
+Be sure to link SDL2 when compiling:
 
 ```
 g++ main.cpp -std=c++20 -lSDL2 -o main
